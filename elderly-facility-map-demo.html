@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日高地区 施設マップ（デモ）</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 90vh; width: 100%; }
+    .filter-btns { text-align: center; margin: 10px 0; }
+    .filter-btns button { margin: 0 5px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">日高地区 施設マップ（デモ）</h2>
+  <div class="filter-btns">
+    <button onclick="filterMarkers('すべて')">すべて</button>
+    <button onclick="filterMarkers('医療機関')">🏥 医療機関</button>
+    <button onclick="filterMarkers('高齢者福祉施設')">🧓 高齢者福祉施設</button>
+    <button onclick="filterMarkers('こども食堂')">🍽 こども食堂</button>
+    <button onclick="filterMarkers('ドラッグストア・薬局')">💊 薬局</button>
+    <button onclick="filterMarkers('買い物')">🛍 買い物</button>
+    <button onclick="filterMarkers('地区コミュニティセンター')">🏢 地区センター</button>
+    <button onclick="filterMarkers('公園')">🌳 公園</button>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([35.46722204389121, 134.7715089114013], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const icons = {
+      '医療機関': '🏥',
+      '高齢者福祉施設': '🧓',
+      'こども食堂': '🍽',
+      'ドラッグストア・薬局': '💊',
+      '買い物': '🛍',
+      '地区コミュニティセンター': '🏢',
+      '公園': '🌳'
+    };
+
+    const allMarkers = [
+      { name: '公立豊岡病院 日高クリニック', lat: 35.46722204389121, lng: 134.7715089114013, genre: '医療機関' },
+      { name: '谷垣医院', lat: 35.460167255390225, lng: 134.73564615372902, genre: '医療機関' },
+      { name: 'つるさこ耳鼻咽喉科', lat: 35.4649362, lng: 134.7733026, genre: '医療機関' },
+      { name: 'のだ内科クリニック', lat: 35.4667772, lng: 134.7744947, genre: '医療機関' },
+      { name: '長谷川クリニック', lat: 35.4652258, lng: 134.7647585, genre: '医療機関' },
+      { name: 'やさか眼科クリニック', lat: 35.47089578715139, lng: 134.7747099672221, genre: '医療機関' },
+      { name: '神鍋診療所（市立）', lat: 35.5105769, lng: 134.6681422, genre: '医療機関' },
+      { name: 'すず内科外科クリニック', lat: 35.4650242, lng: 134.7844161, genre: '医療機関' },
+      { name: '特別養護老人ホーム たじま荘', lat: 35.47780255276538, lng: 134.72028460584804, genre: '高齢者福祉施設' },
+      { name: '四季の里ひだか（地域密着型通所介護）', lat: 35.4652127, lng: 134.7740349, genre: '高齢者福祉施設' },
+      { name: '日高子ども食堂「めぐみ」', lat: 35.47333963282479, lng: 134.77902476405265, genre: 'こども食堂' },
+      { name: 'コスモス但馬日高店', lat: 35.4787435935227, lng: 134.78303529420702, genre: 'ドラッグストア・薬局' },
+      { name: 'ゴダイ薬局日高パーク店', lat: 35.4777716, lng: 134.7807746, genre: 'ドラッグストア・薬局' },
+      { name: 'ダイソー 豊岡日高店', lat: 35.470778088911366, lng: 134.77540154817586, genre: '買い物' },
+      { name: 'ワッツウィズ 日高マックスバリュ店', lat: 35.4723723, lng: 134.7754516, genre: '買い物' },
+      { name: '伝所鳩（でんしょばと）', lat: 35.4697553, lng: 134.7715204, genre: '買い物' },
+      { name: 'バーガーシティ サンロード店', lat: 35.4731595, lng: 134.7748314, genre: '買い物' },
+      { name: '日高地区コミュニティセンター（きらめき日高）', lat: 35.47078382828845, lng: 134.77219866351933, genre: '地区コミュニティセンター' },
+      { name: '清滝地区コミュニティセンター（桜・清流の郷 きよたき）', lat: 35.5212352, lng: 134.7576344, genre: '地区コミュニティセンター' },
+      { name: '神鍋渓谷公園', lat: 35.51376096798489, lng: 134.6414684039988, genre: '公園' },
+      { name: '神鍋山頂公園', lat: 35.50902050459238, lng: 134.6798870334574, genre: '公園' },
+      { name: '植村直己記念スポーツ公園', lat: 35.4809360426351, lng: 134.7684824391633, genre: '公園' }
+    ];
+
+    const markerGroup = L.layerGroup().addTo(map);
+
+    function filterMarkers(genre) {
+      markerGroup.clearLayers();
+      const filtered = genre === 'すべて' ? allMarkers : allMarkers.filter(m => m.genre === genre);
+      filtered.forEach(m => {
+        const icon = L.divIcon({ className: 'custom-div-icon', html: `<div style="font-size:24px;">${icons[m.genre]}</div>` });
+        L.marker([m.lat, m.lng], { icon }).bindPopup(`<strong>${m.name}</strong><br>${m.genre}`).addTo(markerGroup);
+      });
+    }
+
+    filterMarkers('すべて');
+  </script>
+</body>
+</html>
